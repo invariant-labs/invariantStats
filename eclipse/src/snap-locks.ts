@@ -60,15 +60,13 @@ export const createSnapshotForNetwork = async (network: Network) => {
       throw new Error("Unknown network");
   }
 
-  const idsList: string[] = [];
-
-  Object.values(tokensData).forEach((token) => {
-    if (typeof token?.coingeckoId !== "undefined") {
-      idsList.push(token.coingeckoId);
-    }
-  });
-
-  const coingeckoPrices = await getTokensPrices(idsList);
+  const tokenPrices = Object.entries(await getTokensPrices(network)).reduce(
+    (acc, [key, { price }]) => {
+      acc[key] = price;
+      return acc;
+    },
+    {} as Record<string, number>
+  );
 
   const connection = provider.connection;
 
@@ -91,7 +89,7 @@ export const createSnapshotForNetwork = async (network: Network) => {
       const result = await market.getCurrentTokenStats(
         supportedToken,
         "So11111111111111111111111111111111111111112",
-        coingeckoPrices["ethereum"]
+        tokenPrices["So11111111111111111111111111111111111111112"]
       );
 
       if (!("error" in result)) {
@@ -137,10 +135,10 @@ export const createSnapshotForNetwork = async (network: Network) => {
       decimals: 0,
     };
     let tokenXPrice = tokenXData.coingeckoId
-      ? coingeckoPrices[tokenXData.coingeckoId] ?? 0
+      ? tokenPrices[tokenXData.coingeckoId] ?? 0
       : 0;
     let tokenYPrice = tokenYData.coingeckoId
-      ? coingeckoPrices[tokenYData.coingeckoId] ?? 0
+      ? tokenPrices[tokenYData.coingeckoId] ?? 0
       : 0;
 
     if (Object.keys(supportedTokens).includes(poolStatsData.tokenX.address)) {
